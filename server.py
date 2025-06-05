@@ -1,7 +1,6 @@
 """Basic Fastmail MCP Server"""
 
 import os
-import json
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
@@ -15,7 +14,9 @@ from fastmail import Email, fastmail_list_inbox_emails, fastmail_get_email_conte
 load_dotenv()
 
 # Static key from the environment for authorization
-BEARER_TOKEN = os.getenv("BEARER_TOKEN", "default_token")
+BEARER_TOKEN = os.getenv("BEARER_TOKEN")
+if not BEARER_TOKEN:
+    raise ValueError("BEARER_TOKEN environment variable is not set.")
 
 
 class BearerAuthMiddleware(BaseHTTPMiddleware):
@@ -62,7 +63,7 @@ def list_inbox_emails() -> str:
     email_list = [
         (
             f"\nemail_id: {email.id}\nFrom: {email.sender}\n"
-            "Subject: {email.subject}\nDate: {email.date}\n"
+            f"Subject: {email.subject}\nDate: {email.date}\n"
         )
         for email in emails
     ]
