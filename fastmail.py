@@ -102,7 +102,6 @@ def get_inbox_id(client: Client) -> str:
             MailboxGet(ids=Ref("/ids")),
         ]
     )
-    # From results, second result, MailboxGet instance, retrieve Mailbox data
     assert isinstance(
         results[1].response, MailboxGetResponse
     ), "Error in Mailbox/get method"
@@ -110,7 +109,6 @@ def get_inbox_id(client: Client) -> str:
     if not mailbox_data:
         raise MailboxNotFound("Inbox not found on the server")
 
-    # From the first mailbox result, retrieve the Mailbox ID
     mailbox_id = mailbox_data[0].id
     assert mailbox_id
     return mailbox_id
@@ -135,7 +133,43 @@ def fastmail_list_inbox_emails(api_token: str) -> list[Email]:
         ]
     )
 
-    # From results, second result, EmailGet instance, retrieve Email data
+    email_data = results[1].response.data
+    emails = [
+        Email(
+            id=email.id,
+            sender=format_addresses(email.mail_from),
+            subject=email.subject,
+            date=email.received_at,
+        )
+        for email in email_data
+    ]
+
+    return emails
+
+
+def fastmail_query_emails_by_keyword(api_token: str, keyword: str) -> list[Email]:
+    """Query emails in the inbox by a keyword in the subject or body.
+
+    Args:
+        api_token: Fastmail API token.
+        keyword: Keyword to search for in email subjects or bodies.
+
+    Returns:
+        List of Email objects containing id, sender, subject, and date.
+    """
+    client = get_client(api_token)
+
+    results = client.request(
+        [
+            EmailQuery(
+                filter=EmailQueryFilterCondition(text=keyword),
+                sort=[Comparator(property="receivedAt", is_ascending=False)],
+                limit=100,
+            ),
+            EmailGet(ids=Ref("/ids")),
+        ]
+    )
+
     email_data = results[1].response.data
     emails = [
         Email(

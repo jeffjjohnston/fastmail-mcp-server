@@ -9,7 +9,12 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
-from fastmail import Email, fastmail_list_inbox_emails, fastmail_get_email_content
+from fastmail import (
+    Email,
+    fastmail_list_inbox_emails,
+    fastmail_get_email_content,
+    fastmail_query_emails_by_keyword,
+)
 
 load_dotenv()
 
@@ -68,6 +73,37 @@ def list_inbox_emails() -> str:
         for email in emails
     ]
     return f"Current inbox emails:\n{"\n".join(email_list)}"
+
+
+@mcp.tool(name="query_emails_by_keyword")
+def query_emails_by_keyword(keyword: str) -> str:
+    """Query emails in the inbox by a keyword in the subject or body.
+
+    Args:
+        keyword: The keyword to search for in the emails
+    Returns:
+        List of emails matching the keyword, including id, sender, subject, and date
+    """
+    fastmail_api_token = get_fastmail_api_token()
+    if not keyword:
+        return "Keyword is required for searching emails."
+    try:
+        emails: list[Email] = fastmail_query_emails_by_keyword(
+            fastmail_api_token, keyword
+        )
+        if not emails:
+            return f"No emails found matching the keyword '{keyword}'."
+
+        email_list = [
+            (
+                f"\nemail_id: {email.id}\nFrom: {email.sender}\n"
+                f"Subject: {email.subject}\nDate: {email.date}\n"
+            )
+            for email in emails
+        ]
+        return f"Emails matching '{keyword}':\n{"\n".join(email_list)}"
+    except ValueError as e:
+        return f"Error querying emails: {str(e)}"
 
 
 @mcp.tool(name="get_email_content")
