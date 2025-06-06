@@ -22,6 +22,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Tools
+
+The server implements the following tools:
+
+  - `list_inbox_emails`: Lists the emails in the Inbox (id, sender, subject, and date)
+  - `get_email_content`: Retrieves the content of an email given an id. HTML content will be converted to text using [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/)
+
 ## Running the server
 
 Export a bearer token and start the server:
