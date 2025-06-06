@@ -107,3 +107,38 @@ resp = client.responses.create(
 
 print(resp.output_text)
 ```
+
+## Simple Flask chat interface
+
+The repository also contains `chat_ui.py`, a minimal Flask web app that keeps
+conversation context while always providing the Fastmail MCP server to OpenAI.
+The application expects the following environment variables:
+
+- `BEARER_TOKEN` – the static token used by the MCP server
+- `FASTMAIL_API_KEY` – your Fastmail API token
+- `MCP_SERVER_URL` – URL of the MCP server (defaults to
+  `http://127.0.0.1:8000/mcp/`)
+- `OPENAI_API_KEY` – API key for OpenAI
+
+Launch the interface with:
+
+```bash
+export OPENAI_API_KEY=<OPENAI_API_KEY>
+export BEARER_TOKEN=<BEARER_TOKEN>
+export FASTMAIL_API_KEY=<FASTMAIL_API_KEY>
+python chat_ui.py
+```
+
+Open `http://127.0.0.1:5000` in your browser and start chatting. Use the
+**Clear** button to reset the conversation state.
+
+The chat app sends requests to OpenAI like so:
+
+```python
+resp = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=conversation,
+    tools=build_tools(),  # MCP configuration
+)
+assistant_text = resp.choices[0].message.content
+```
