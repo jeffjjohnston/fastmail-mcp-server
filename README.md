@@ -40,9 +40,9 @@ python server.py
 
 By default the server listens on `http://127.0.0.1:8000/mcp/`.
 
-## Example usage (FastMCP client)
+## Example client usage: FastMCP client
 
-The server exposes MCP tools. You can interact with them using the `fastmcp` client. The example below lists inbox emails:
+You can interact with the server using the `fastmcp` client. The example below calls the `list_inbox_emails` tool:
 
 ```python
 import asyncio
@@ -68,7 +68,7 @@ asyncio.run(main())
 
 Replace `<FASTMAIL_API_TOKEN>` with your personal Fastmail API token.
 
-## Example usage (OpenAI)
+## Example client usage: OpenAI
 
 Your server needs to be accessible from the Internet to use it with OpenAI's Remote MCP capabilities. A quick way to enable this for testing is to use Cloudflare's `cloudflared` tool to build a tunnel.
 
