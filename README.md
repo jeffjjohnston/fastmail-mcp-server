@@ -1,14 +1,14 @@
 # fastmail-mcp-server
 
-A basic MCP server that provides access to a Fastmail inbox.
+A basic MCP server that provides access to a Fastmail inbox, built with [FastMCP](https://gofastmcp.com) and [jmapc](https://github.com/smkent/jmapc).
 
 ## Prerequisites
 
 - **Python 3.12+**. The project has been developed with Python 3.12.
 - **Environment variables**
-  - `BEARER_TOKEN` &ndash; static token required to authorize HTTP requests to the server. The server defaults to `default_token` if not set.
+  - `BEARER_TOKEN`: A static token required to authorize HTTP requests to the server.
 
-A Fastmail API token is also required for each request. See [Fastmail's API documentation](https://www.fastmail.help/hc/en-us/articles/360058752314) for instructions on creating a token (Settings → Password & Security → **API Tokens**).
+Along with the bearer token, a Fastmail API token must also be provided by MCP clients. See [Fastmail's API documentation](https://www.fastmail.com/dev/) for instructions on creating a token (Settings -> Privacy & Security -> **Connected apps & API tokens**).
 
 ## Installation
 
