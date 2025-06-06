@@ -22,6 +22,15 @@ FASTMAIL_API_HOST = "api.fastmail.com/jmap/session"
 
 
 @dataclass
+class EmailPage:
+    """Data class to represent a page of emails."""
+
+    emails: list["Email"]
+    offset: int
+    total: int
+
+
+@dataclass
 class Email:
     """Data class to represent an email."""
 
@@ -114,11 +123,11 @@ def get_inbox_id(client: Client) -> str:
     return mailbox_id
 
 
-def fastmail_list_inbox_emails(api_token: str) -> list[Email]:
+def fastmail_list_inbox_emails(api_token: str, offset: int = 0) -> EmailPage:
     """List all emails in the inbox.
 
     Returns:
-        List of Email objects containing id, sender, subject, and date
+        EmailPage object containing a list of up to 30 Email objects and pagination info
     """
     client = get_client(api_token)
     inbox_id = get_inbox_id(client)
@@ -128,10 +137,15 @@ def fastmail_list_inbox_emails(api_token: str) -> list[Email]:
             EmailQuery(
                 filter=EmailQueryFilterCondition(in_mailbox=inbox_id),
                 sort=[Comparator(property="receivedAt", is_ascending=False)],
+                calculate_total=True,
+                position=offset,
+                limit=30,
             ),
             EmailGet(ids=Ref("/ids")),
         ]
     )
+
+    query_data = results[0].response
 
     email_data = results[1].response.data
     emails = [
@@ -144,10 +158,16 @@ def fastmail_list_inbox_emails(api_token: str) -> list[Email]:
         for email in email_data
     ]
 
-    return emails
+    return EmailPage(
+        emails=emails,
+        offset=query_data.position,
+        total=query_data.total,
+    )
 
 
-def fastmail_query_emails_by_keyword(api_token: str, keyword: str) -> list[Email]:
+def fastmail_query_emails_by_keyword(
+    api_token: str, keyword: str, offset: int = 0
+) -> EmailPage:
     """Query emails in the inbox by a keyword in the subject or body.
 
     Args:
@@ -155,7 +175,7 @@ def fastmail_query_emails_by_keyword(api_token: str, keyword: str) -> list[Email
         keyword: Keyword to search for in email subjects or bodies.
 
     Returns:
-        List of Email objects containing id, sender, subject, and date.
+        EmailPage object containing a list of Email objects and pagination info.
     """
     client = get_client(api_token)
 
@@ -164,11 +184,17 @@ def fastmail_query_emails_by_keyword(api_token: str, keyword: str) -> list[Email
             EmailQuery(
                 filter=EmailQueryFilterCondition(text=keyword),
                 sort=[Comparator(property="receivedAt", is_ascending=False)],
-                limit=100,
+                position=offset,
+                calculate_total=True,
+                limit=30,
             ),
             EmailGet(ids=Ref("/ids")),
         ]
     )
+
+    query_data = results[0].response
+    if query_data.total == 0:
+        return EmailPage(emails=[], offset=offset, total=0)
 
     email_data = results[1].response.data
     emails = [
@@ -181,7 +207,11 @@ def fastmail_query_emails_by_keyword(api_token: str, keyword: str) -> list[Email
         for email in email_data
     ]
 
-    return emails
+    return EmailPage(
+        emails=emails,
+        offset=query_data.position,
+        total=query_data.total,
+    )
 
 
 def fastmail_get_email_content(api_token: str, email_id: str) -> str:

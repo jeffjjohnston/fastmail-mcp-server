@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 from fastmail import (
-    Email,
+    EmailPage,
     fastmail_list_inbox_emails,
     fastmail_get_email_content,
     fastmail_query_emails_by_keyword,
@@ -54,54 +54,69 @@ mcp = FastMCP("Fastmail Manager")
 
 
 @mcp.tool(name="list_inbox_emails")
-def list_inbox_emails() -> str:
+def list_inbox_emails(offset: int) -> str:
     """List all emails in the inbox.
 
     Returns:
         List of emails, including id, sender, subject, and date
     """
     fastmail_api_token = get_fastmail_api_token()
-    emails: list[Email] = fastmail_list_inbox_emails(fastmail_api_token)
-    if not emails:
-        return "No emails found in the inbox."
+    email_page: EmailPage = fastmail_list_inbox_emails(
+        fastmail_api_token, offset=offset
+    )
+    if not email_page.emails:
+        return f"No emails found in the inbox with offset {offset}."
 
     email_list = [
         (
             f"\nemail_id: {email.id}\nFrom: {email.sender}\n"
             f"Subject: {email.subject}\nDate: {email.date}\n"
         )
-        for email in emails
+        for email in email_page.emails
     ]
-    return f"Current inbox emails:\n{"\n".join(email_list)}"
+    return (
+        f"Total inbox emails: {email_page.total}\n"
+        + f"Current page (offset {offset}) of inbox emails:\n"
+        + "\n".join(email_list)
+    )
 
 
 @mcp.tool(name="query_emails_by_keyword")
-def query_emails_by_keyword(keyword: str) -> str:
+def query_emails_by_keyword(keyword: str, offset: int = 0) -> str:
     """Query emails in the inbox by a keyword in the subject or body.
 
     Args:
         keyword: The keyword to search for in the emails
+        offset: The offset for pagination (default is 0)
     Returns:
-        List of emails matching the keyword, including id, sender, subject, and date
+        The total number of emails matching the keyword and a list of emails
+        (up to 30) matching the keyword, including id, sender, subject, and date
     """
     fastmail_api_token = get_fastmail_api_token()
     if not keyword:
         return "Keyword is required for searching emails."
     try:
-        emails: list[Email] = fastmail_query_emails_by_keyword(
-            fastmail_api_token, keyword
+        email_page: EmailPage = fastmail_query_emails_by_keyword(
+            fastmail_api_token, keyword, offset=offset
         )
-        if not emails:
-            return f"No emails found matching the keyword '{keyword}'."
+        if not email_page.emails:
+            return (
+                "No emails found matching the keyword "
+                + f"'{keyword}' with offset {offset}."
+            )
 
         email_list = [
             (
                 f"\nemail_id: {email.id}\nFrom: {email.sender}\n"
                 f"Subject: {email.subject}\nDate: {email.date}\n"
             )
-            for email in emails
+            for email in email_page.emails
         ]
-        return f"Emails matching '{keyword}':\n{"\n".join(email_list)}"
+        return (
+            f"Total emails matching '{keyword}': {email_page.total}\n"
+            f"Current page (offset {offset}) of emails:\n"
+            "\n".join(email_list)
+        )
     except ValueError as e:
         return f"Error querying emails: {str(e)}"
 
@@ -114,7 +129,8 @@ def get_email_content(email_id: str) -> str:
         email_id: The ID of the email to retrieve
 
     Returns:
-        The content of the email
+        The content of the email (up to 1MB), or an error message if the email is not
+        found
     """
     fastmail_api_token = get_fastmail_api_token()
     if not email_id:
