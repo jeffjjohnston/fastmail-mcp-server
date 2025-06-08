@@ -79,6 +79,7 @@ Replace `<FASTMAIL_API_TOKEN>` with your personal Fastmail API token.
 Your server needs to be accessible from the Internet to use it with OpenAI's Remote MCP capabilities. A quick way to enable this for testing is to use Cloudflare's `cloudflared` tool to build a tunnel.
 
 ```bash
+# on Mac a with homebrew, use `brew install cloudflared`
 cloudflared tunnel --url http://127.0.0.1:8000
 ```
 
@@ -113,3 +114,7 @@ resp = client.responses.create(
 
 print(resp.output_text)
 ```
+
+# Fastmail Chat
+
+A small web app, [Fastmail Chat](https://github.com/jeffjjohnston/fastmail-chat), provides a chat interface built on OpenAI's remote MCP support and this MCP server. 
