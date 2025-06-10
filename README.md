@@ -7,6 +7,7 @@ A basic MCP server that provides access to a Fastmail inbox, built with [FastMCP
 - **Python 3.12+**. The project has been developed with Python 3.12.
 - **Environment variables**
   - `BEARER_TOKEN`: A static token required to authorize HTTP requests to the server.
+  - `LOG_LEVEL` (optional): Python logging level for server output. Defaults to `INFO`.
 
 Along with the bearer token, a Fastmail API token must also be provided by MCP clients. See [Fastmail's API documentation](https://www.fastmail.com/dev/) for instructions on creating a token (Settings -> Privacy & Security -> **Connected apps & API tokens**).
 
@@ -41,6 +42,7 @@ Export a bearer token and start the server:
 
 ```bash
 export BEARER_TOKEN="my-secret-token"
+export LOG_LEVEL="DEBUG"  # optional
 python server.py
 ```
 
