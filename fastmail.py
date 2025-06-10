@@ -1,6 +1,7 @@
 """Shared module for Fastmail JMAP client operations."""
 
 import re
+import logging
 from dataclasses import dataclass
 from bs4 import BeautifulSoup
 from jmapc import (
@@ -19,6 +20,8 @@ from jmapc.methods import (
 )
 
 FASTMAIL_API_HOST = "api.fastmail.com/jmap/session"
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -99,12 +102,14 @@ def get_body_as_text(email) -> str:
 
 def get_client(api_token: str) -> Client:
     """Create and return a Fastmail JMAP client instance."""
+    logger.debug("Creating Fastmail client")
     client = Client.create_with_api_token(host=FASTMAIL_API_HOST, api_token=api_token)
     return client
 
 
 def get_inbox_id(client: Client) -> str:
     """Get the ID of the inbox mailbox."""
+    logger.debug("Fetching inbox mailbox ID")
     results = client.request(
         [
             MailboxQuery(filter=MailboxQueryFilterCondition(name="Inbox")),
@@ -129,6 +134,7 @@ def fastmail_list_inbox_emails(api_token: str, offset: int = 0) -> EmailPage:
     Returns:
         EmailPage object containing a list of up to 30 Email objects and pagination info
     """
+    logger.debug("Listing inbox emails (offset=%s)", offset)
     client = get_client(api_token)
     inbox_id = get_inbox_id(client)
 
@@ -158,6 +164,10 @@ def fastmail_list_inbox_emails(api_token: str, offset: int = 0) -> EmailPage:
         for email in email_data
     ]
 
+    logger.debug("Query returned %s emails", len(emails))
+
+    logger.debug("Listed %s emails", len(emails))
+
     return EmailPage(
         emails=emails,
         offset=query_data.position,
@@ -177,6 +187,7 @@ def fastmail_query_emails_by_keyword(
     Returns:
         EmailPage object containing a list of Email objects and pagination info.
     """
+    logger.debug("Querying emails for keyword '%s' (offset=%s)", keyword, offset)
     client = get_client(api_token)
 
     results = client.request(
@@ -216,6 +227,7 @@ def fastmail_query_emails_by_keyword(
 
 def fastmail_get_email_content(api_token: str, email_id: str) -> str:
     """Get the content of an email by its ID."""
+    logger.debug("Retrieving content for email %s", email_id)
     client = get_client(api_token)
     results = client.request(
         [
@@ -231,4 +243,6 @@ def fastmail_get_email_content(api_token: str, email_id: str) -> str:
         return "No email found with the given ID."
 
     email = email_data[0]
-    return get_body_as_text(email)
+    content = get_body_as_text(email)
+    logger.debug("Retrieved email content length %s", len(content))
+    return content
