@@ -60,6 +60,19 @@ def get_fastmail_api_token() -> str:
     return api_token
 
 
+def display_email_page(email_page: EmailPage) -> str:
+    """Format a list of emails for display."""
+    email_list = "\n".join(
+        f"email_id: {email.id}\nFrom: {email.sender}\n"
+        f"Subject: {email.subject}\nDate: {email.date}\n"
+        for email in email_page.emails
+    )
+    return (
+        f"Total emails: {email_page.total}\n"
+        f"Current page (offset {email_page.offset}) of emails:\n" + email_list
+    )
+
+
 # Initialize the MCP server
 mcp = FastMCP("Fastmail Manager")
 
@@ -80,18 +93,7 @@ def list_inbox_emails(offset: int) -> str:
     if not email_page.emails:
         return f"No emails found in the inbox with offset {offset}."
 
-    email_list = [
-        (
-            f"\nemail_id: {email.id}\nFrom: {email.sender}\n"
-            f"Subject: {email.subject}\nDate: {email.date}\n"
-        )
-        for email in email_page.emails
-    ]
-    return (
-        f"Total inbox emails: {email_page.total}\n"
-        + f"Current page (offset {offset}) of inbox emails:\n"
-        + "\n".join(email_list)
-    )
+    return display_email_page(email_page)
 
 
 @mcp.tool(name="query_emails_by_keyword")
@@ -120,18 +122,7 @@ def query_emails_by_keyword(keyword: str, offset: int = 0) -> str:
                 + f"'{keyword}' with offset {offset}."
             )
 
-        email_list = [
-            (
-                f"\nemail_id: {email.id}\nFrom: {email.sender}\n"
-                f"Subject: {email.subject}\nDate: {email.date}\n"
-            )
-            for email in email_page.emails
-        ]
-        return (
-            f"Total emails matching '{keyword}': {email_page.total}\n"
-            f"Current page (offset {offset}) of emails:\n"
-            "\n".join(email_list)
-        )
+        return display_email_page(email_page)
     except ValueError as e:
         logger.error("Error querying emails: %s", e)
         return f"Error querying emails: {str(e)}"

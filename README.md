@@ -1,4 +1,4 @@
-# fastmail-mcp-server
+# Fastmail MCP Server
 
 A basic MCP server that provides access to a Fastmail inbox, built with [FastMCP](https://gofastmcp.com) and [jmapc](https://github.com/smkent/jmapc).
 
