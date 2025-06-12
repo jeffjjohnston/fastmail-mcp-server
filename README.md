@@ -30,8 +30,8 @@ The server implements the following tools:
   - `list_inbox_emails`: Lists the emails in the Inbox (id, sender, subject, and
     date). Accepts an `offset` for pagination.
   - `query_emails_by_keyword`: Searches for a keyword in the subject or body of
-    emails. Returns the total matches and a page of results, with an optional
-    `offset` parameter.
+    emails while ignoring messages flagged as junk or deleted. Returns the total
+    matches and a page of results, with an optional `offset` parameter.
   - `get_email_content`: Retrieves the content of an email given an id. HTML
     content is converted to text using
     [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/).

@@ -8,8 +8,10 @@ from jmapc import (
     Client,
     Comparator,
     EmailQueryFilterCondition,
+    EmailQueryFilterOperator,
     MailboxQueryFilterCondition,
     Ref,
+    Operator,
 )
 from jmapc.methods import (
     EmailGet,
@@ -190,10 +192,19 @@ def fastmail_query_emails_by_keyword(
     logger.debug("Querying emails for keyword '%s' (offset=%s)", keyword, offset)
     client = get_client(api_token)
 
+    compound_filter = EmailQueryFilterOperator(
+        operator=Operator.AND,
+        conditions=[
+            EmailQueryFilterCondition(not_keyword="$deleted"),
+            EmailQueryFilterCondition(not_keyword="$junk"),
+            EmailQueryFilterCondition(text=keyword),
+        ],
+    )
+
     results = client.request(
         [
             EmailQuery(
-                filter=EmailQueryFilterCondition(text=keyword),
+                filter=compound_filter,
                 sort=[Comparator(property="receivedAt", is_ascending=False)],
                 position=offset,
                 calculate_total=True,
