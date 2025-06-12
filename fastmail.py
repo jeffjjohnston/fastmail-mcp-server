@@ -8,10 +8,8 @@ from jmapc import (
     Client,
     Comparator,
     EmailQueryFilterCondition,
-    EmailQueryFilterOperator,
     MailboxQueryFilterCondition,
     Ref,
-    Operator,
 )
 from jmapc.methods import (
     EmailGet,
@@ -109,12 +107,12 @@ def get_client(api_token: str) -> Client:
     return client
 
 
-def get_inbox_id(client: Client) -> str:
-    """Get the ID of the inbox mailbox."""
-    logger.debug("Fetching inbox mailbox ID")
+def get_mailbox_id_for_role(client: Client, role: str) -> str | None:
+    """Get the ID of the mailbox for a specific role."""
+    logger.debug("Fetching mailbox ID for role: %s", role)
     results = client.request(
         [
-            MailboxQuery(filter=MailboxQueryFilterCondition(name="Inbox")),
+            MailboxQuery(filter=MailboxQueryFilterCondition(role=role)),
             MailboxGet(ids=Ref("/ids")),
         ]
     )
@@ -123,7 +121,7 @@ def get_inbox_id(client: Client) -> str:
     ), "Error in Mailbox/get method"
     mailbox_data = results[1].response.data
     if not mailbox_data:
-        raise MailboxNotFound("Inbox not found on the server")
+        return None
 
     mailbox_id = mailbox_data[0].id
     assert mailbox_id
@@ -138,7 +136,10 @@ def fastmail_list_inbox_emails(api_token: str, offset: int = 0) -> EmailPage:
     """
     logger.debug("Listing inbox emails (offset=%s)", offset)
     client = get_client(api_token)
-    inbox_id = get_inbox_id(client)
+    inbox_id = get_mailbox_id_for_role(client, "inbox")
+    if not inbox_id:
+        logger.error("Inbox mailbox not found")
+        raise MailboxNotFound("Inbox mailbox not found")
 
     results = client.request(
         [
@@ -192,19 +193,19 @@ def fastmail_query_emails_by_keyword(
     logger.debug("Querying emails for keyword '%s' (offset=%s)", keyword, offset)
     client = get_client(api_token)
 
-    compound_filter = EmailQueryFilterOperator(
-        operator=Operator.AND,
-        conditions=[
-            EmailQueryFilterCondition(not_keyword="$deleted"),
-            EmailQueryFilterCondition(not_keyword="$junk"),
-            EmailQueryFilterCondition(text=keyword),
-        ],
-    )
+    trash_id = get_mailbox_id_for_role(client, "trash")
+    junk_id = get_mailbox_id_for_role(client, "junk")
+
+    exclude_mailboxes = list(filter(None, [trash_id, junk_id]))
+
+    filter_params: dict[str, str | list[str]] = {"text": keyword}
+    if exclude_mailboxes:
+        filter_params["in_mailbox_other_than"] = exclude_mailboxes
 
     results = client.request(
         [
             EmailQuery(
-                filter=compound_filter,
+                filter=EmailQueryFilterCondition(**filter_params),
                 sort=[Comparator(property="receivedAt", is_ascending=False)],
                 position=offset,
                 calculate_total=True,
