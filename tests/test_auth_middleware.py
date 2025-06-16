@@ -1,9 +1,14 @@
 import os
+import sys
+from pathlib import Path
 
 from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse
 from starlette.routing import Route
 from starlette.testclient import TestClient
+
+# ensure project root is on the path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 # Set up test token before importing the middleware
 TEST_TOKEN = "test-token"
