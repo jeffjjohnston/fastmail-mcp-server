@@ -48,6 +48,14 @@ python server.py
 
 By default the server listens on `http://127.0.0.1:8000/mcp/`.
 
+## Testing
+
+Run the test suite with [pytest](https://docs.pytest.org/):
+
+```bash
+pytest
+```
+
 ## Example client usage: FastMCP client
 
 You can interact with the server using the `fastmcp` client. The example below calls the `list_inbox_emails` tool:
