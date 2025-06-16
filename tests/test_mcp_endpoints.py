@@ -38,7 +38,9 @@ def call_tool(client: TestClient, name: str, args: dict | None = None, *, includ
     }
     if include_api_token:
         headers["fastmail-api-token"] = "api-token"
-    return client.post("/mcp/", data=json.dumps(message), headers=headers)
+    # httpx deprecated using `data` with raw JSON strings. Use `content` to
+    # avoid deprecation warnings when posting JSON payloads.
+    return client.post("/mcp/", content=json.dumps(message), headers=headers)
 
 
 def test_list_inbox_emails_endpoint():
