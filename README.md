@@ -1,5 +1,7 @@
 # Fastmail MCP Server
 
+**2026-04-23**: [Fastmail](https://fastmail.com) now has [an official MCP server](https://www.fastmail.com/blog/an-mcp-server-for-fastmail/)!
+
 A basic MCP server that provides access to a Fastmail inbox, built with [FastMCP](https://gofastmcp.com) and [jmapc](https://github.com/smkent/jmapc).
 
 ## Prerequisites
